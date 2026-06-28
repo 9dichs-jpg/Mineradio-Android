@@ -1,6 +1,7 @@
 package com.mineradio.android;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -38,6 +39,22 @@ public class MainActivity extends AppCompatActivity {
         public int getServerPort() {
             return (nodeService != null) ? nodeService.getPort() : 0;
         }
+
+        @JavascriptInterface
+        public void openExternalBrowser(String url) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "无法打开浏览器: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        @JavascriptInterface
+        public void showToast(String msg) {
+            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -45,11 +62,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Start Node.js backend server
         nodeService = new NodeService();
         nodeService.start(this, () -> runOnUiThread(this::initWebView));
 
-        // If server start fails or takes too long, still show UI
         initWebView();
     }
 
@@ -102,14 +117,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-
-                // Block desktop lyrics/wallpaper endpoints
                 String path = uri.getPath();
-
-                // Use asset loader for static files
                 WebResourceResponse response = assetLoader.shouldInterceptRequest(uri);
                 if (response != null) return response;
-
                 return super.shouldInterceptRequest(view, request);
             }
 
@@ -118,9 +128,24 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 injectDesktopStubs();
             }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (url.startsWith("https://mineradio.local/") || url.startsWith("http://127.0.0.1:")) {
+                    return false;
+                }
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "无法打开链接", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
         });
 
-        // Load from our bundled assets
         int port = (nodeService != null) ? nodeService.getPort() : 0;
         if (port > 0) {
             webView.loadUrl("http://127.0.0.1:" + port + "/index.html");
@@ -148,9 +173,17 @@ public class MainActivity extends AppCompatActivity {
             "  }," +
             "  getState: function(){return Promise.resolve({isMaximized:false,isMinimized:false,isFullscreen:!!document.fullscreenElement});}," +
             "  close: function(){/* no-op */return Promise.resolve();}," +
-            "  openNeteaseMusicLogin:function(){if(window.open)window.open(\"https://music.163.com/#/login\");return Promise.resolve();}," +
+            "  openNeteaseMusicLogin:function(){" +
+            "    if(window.AndroidBridge)window.AndroidBridge.showToast('请在弹出的浏览器中登录网易云音乐\\n登录后回到本页手动粘贴cookie');" +
+            "    if(window.AndroidBridge)window.AndroidBridge.openExternalBrowser('https://music.163.com/#/login');" +
+            "    return Promise.resolve({ok:true,cookie:''});" +
+            "  }," +
             "  clearNeteaseMusicLogin:function(){return Promise.resolve();}," +
-            "  openQQMusicLogin:function(){if(window.open)window.open(\"https://y.qq.com/n/ryqq/profile\");return Promise.resolve();}," +
+            "  openQQMusicLogin:function(){" +
+            "    if(window.AndroidBridge)window.AndroidBridge.showToast('请在弹出的浏览器中登录QQ音乐\\n登录后回到本页手动粘贴cookie');" +
+            "    if(window.AndroidBridge)window.AndroidBridge.openExternalBrowser('https://y.qq.com/n/ryqq/profile');" +
+            "    return Promise.resolve({ok:true,cookie:''});" +
+            "  }," +
             "  clearQQMusicLogin:function(){return Promise.resolve();}," +
             "  openUpdateInstaller:function(){return Promise.resolve();}," +
             "  restartApp:function(){return Promise.resolve();}," +
@@ -168,6 +201,15 @@ public class MainActivity extends AppCompatActivity {
             "};" +
             "document.documentElement.classList.add('simple-mode-preload');" +
             "document.body.classList.add('android-shell');" +
+            
+            "var _origFetch = window.fetch;" +
+            "window.fetch = function(url, opts) {" +
+            "  if (typeof url === 'string' && url.startsWith('/api/')) {" +
+            "    if (window.AndroidBridge) window.AndroidBridge.showToast('需要后端服务器支持完整功能');" +
+            "    return Promise.resolve({json:function(){return Promise.resolve({error:'backend not available',loggedIn:false,playlists:[],tracks:[],songs:[]});}});" +
+            "  }" +
+            "  return _origFetch.call(window, url, opts);" +
+            "};" +
         "})();";
         webView.evaluateJavascript(js, null);
     }
