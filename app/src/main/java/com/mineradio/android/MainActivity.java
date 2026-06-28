@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         String js = "javascript:(function() {" +
             "if (window.desktopWindow) return;" +
             "window.desktopWindow = {" +
-            "  isDesktop: false," +
+            "  isDesktop: true," +
             "  minimize: function(){return Promise.resolve();}," +
             "  toggleMaximize: function(){return Promise.resolve();}," +
             "  toggleFullscreen: function(){" +
