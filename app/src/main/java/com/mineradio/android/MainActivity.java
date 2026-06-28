@@ -67,9 +67,21 @@ public class MainActivity extends AppCompatActivity {
 
         webView = new WebView(this);
         setContentView(webView);
+        webView.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override
+            public boolean onCreateWindow(android.webkit.WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+                android.webkit.WebView newView = new android.webkit.WebView(MainActivity.this);
+                android.webkit.WebView.WebViewTransport transport = (android.webkit.WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(newView);
+                resultMsg.sendToTarget();
+                return true;
+            }
+        });
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
+        settings.setSupportMultipleWindows(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
@@ -87,6 +99,16 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (url.startsWith(\"https://music.163.com\") || url.startsWith(\"https://y.qq.com\")) {
+                    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url));
+                    startActivity(intent);
+                    return true;
+                }
+                return false;
+            }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -136,9 +158,9 @@ public class MainActivity extends AppCompatActivity {
             "  }," +
             "  getState: function(){return Promise.resolve({isMaximized:false,isMinimized:false,isFullscreen:!!document.fullscreenElement});}," +
             "  close: function(){/* no-op */return Promise.resolve();}," +
-            "  openNeteaseMusicLogin:function(){return Promise.resolve();}," +
+            "  openNeteaseMusicLogin:function(){window.open("https://music.163.com/#/login");return Promise.resolve();}," +
             "  clearNeteaseMusicLogin:function(){return Promise.resolve();}," +
-            "  openQQMusicLogin:function(){return Promise.resolve();}," +
+            "  openQQMusicLogin:function(){window.open("https://y.qq.com/n/ryqq/profile");return Promise.resolve();}," +
             "  clearQQMusicLogin:function(){return Promise.resolve();}," +
             "  openUpdateInstaller:function(){return Promise.resolve();}," +
             "  restartApp:function(){return Promise.resolve();}," +
