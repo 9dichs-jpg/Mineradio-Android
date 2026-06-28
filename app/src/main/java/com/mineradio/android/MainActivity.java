@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             } catch (Exception e) {
-                Toast.makeText(MainActivity.this, "无法打开浏览器: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "閺冪姵纭堕幍鎾崇磻濞村繗顫嶉崳? " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 } catch (Exception e) {
-                    Toast.makeText(MainActivity.this, "无法打开链接", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "閺冪姵纭堕幍鎾崇磻闁剧偓甯?, Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
     private void injectDesktopStubs() {
         String js = "javascript:(function() {" +
             "if (window.desktopWindow) return;" +
-            "window.desktopWindow = {" +
+            "window.desktopWindow = { apiBase: "https://YOUR-RAILWAY-URL.up.railway.app"," +
             "  isDesktop: true," +
             "  minimize: function(){return Promise.resolve();}," +
             "  toggleMaximize: function(){return Promise.resolve();}," +
@@ -174,13 +174,13 @@ public class MainActivity extends AppCompatActivity {
             "  getState: function(){return Promise.resolve({isMaximized:false,isMinimized:false,isFullscreen:!!document.fullscreenElement});}," +
             "  close: function(){/* no-op */return Promise.resolve();}," +
             "  openNeteaseMusicLogin:function(){" +
-            "    if(window.AndroidBridge)window.AndroidBridge.showToast('请在弹出的浏览器中登录网易云音乐\\n登录后回到本页手动粘贴cookie');" +
+            "    if(window.AndroidBridge)window.AndroidBridge.showToast('鐠囧嘲婀鐟板毉閻ㄥ嫭绁荤憴鍫濇珤娑擃厾娅ヨぐ鏇犵秹閺勬挷绨棅鍏呯\\n閻ц缍嶉崥搴℃礀閸掔増婀版い鍨閸斻劎鐭樼拹纰縪okie');" +
             "    if(window.AndroidBridge)window.AndroidBridge.openExternalBrowser('https://music.163.com/#/login');" +
             "    return Promise.resolve({ok:true,cookie:''});" +
             "  }," +
             "  clearNeteaseMusicLogin:function(){return Promise.resolve();}," +
             "  openQQMusicLogin:function(){" +
-            "    if(window.AndroidBridge)window.AndroidBridge.showToast('请在弹出的浏览器中登录QQ音乐\\n登录后回到本页手动粘贴cookie');" +
+            "    if(window.AndroidBridge)window.AndroidBridge.showToast('鐠囧嘲婀鐟板毉閻ㄥ嫭绁荤憴鍫濇珤娑擃厾娅ヨぐ鏄婹闂婂厖绠癨\n閻ц缍嶉崥搴℃礀閸掔増婀版い鍨閸斻劎鐭樼拹纰縪okie');" +
             "    if(window.AndroidBridge)window.AndroidBridge.openExternalBrowser('https://y.qq.com/n/ryqq/profile');" +
             "    return Promise.resolve({ok:true,cookie:''});" +
             "  }," +
@@ -203,9 +203,9 @@ public class MainActivity extends AppCompatActivity {
             "document.body.classList.add('android-shell');" +
             
             "var _origFetch = window.fetch;" +
-            "window.fetch = function(url, opts) {" +
+            "window.__apiBase = "https://YOUR-RAILWAY-URL.up.railway.app"; window.fetch = function(url, opts) { if (typeof url === \"string\" \u0026\u0026 url.startsWith(\"/api/\")) { url = window.__apiBase + url; }" +
             "  if (typeof url === 'string' && url.startsWith('/api/')) {" +
-            "    if (window.AndroidBridge) window.AndroidBridge.showToast('需要后端服务器支持完整功能');" +
+            "    if (window.AndroidBridge) window.AndroidBridge.showToast('闂団偓鐟曚礁鎮楃粩顖涙箛閸斺€虫珤閺€顖涘瘮鐎瑰本鏆ｉ崝鐔诲厴');" +
             "    return Promise.resolve({json:function(){return Promise.resolve({error:'backend not available',loggedIn:false,playlists:[],tracks:[],songs:[]});}});" +
             "  }" +
             "  return _origFetch.call(window, url, opts);" +

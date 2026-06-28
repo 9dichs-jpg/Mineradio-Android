@@ -1,9 +1,15 @@
 {
-  "name": "mineradio-server",
-  "version": "1.0.0",
-  "private": true,
-  "main": "server.js",
-  "dependencies": {
-    "NeteaseCloudMusicApi": "^4.32.0"
-  }
+    "name":  "mineradio-server",
+    "version":  "1.0.0",
+    "private":  true,
+    "main":  "server.js",
+    "dependencies":  {
+                         "NeteaseCloudMusicApi":  "^4.32.0"
+                     },
+    "scripts":  {
+                    "start":  "node server.js"
+                },
+    "engines":  {
+                    "node":  "\u003e=18"
+                }
 }
